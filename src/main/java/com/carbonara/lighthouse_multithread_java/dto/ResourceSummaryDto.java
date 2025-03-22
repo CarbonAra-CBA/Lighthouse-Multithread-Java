@@ -15,4 +15,10 @@ public class ResourceSummaryDto {
     private int requestCount;
     private long transferSize;
 
+    public Document toDocument() {
+        return new Document()
+                .append("resourceType", resourceType)
+                .append("requestCount", requestCount)
+                .append("transferSize", transferSize);
+    }
 }

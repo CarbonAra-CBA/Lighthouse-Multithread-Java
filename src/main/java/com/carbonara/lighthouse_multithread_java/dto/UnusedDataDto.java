@@ -17,4 +17,12 @@ public class UnusedDataDto {
     private UnusedMetricDto unusedCssRules;
     private UnusedMetricDto modernImageFormats;
 
+    // MongoDB Document로 변환
+    public Document toDocument() {
+        return new Document()
+                .append("url", url)
+                .append("unused_javascript", unusedJavascript.toDocument())
+                .append("unused_css_rules", unusedCssRules.toDocument())
+                .append("modern_image_formats", modernImageFormats.toDocument());
+    }
 }

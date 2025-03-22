@@ -16,4 +16,14 @@ public class Institution {
     private String siteType;
     private String siteLink;
 
+    public Document toDocument() {
+        return new Document()
+                .append("institutionType", institutionType)
+                .append("institutionCategory", institutionCategory)
+                .append("institutionSubcategory", institutionSubcategory)
+                .append("siteName", siteName)
+                .append("siteType", siteType)
+                .append("siteLink", siteLink);
+    }
+}
 

@@ -18,6 +18,15 @@ public class NetworkRequestDto {
     private int statusCode;
     private String protocol;
 
+    public Document toDocument() {
+        return new Document()
+                .append("url", url)
+                .append("resourceType", resourceType)
+                .append("resourceSize", resourceSize)
+                .append("transferSize", transferSize)
+                .append("statusCode", statusCode)
+                .append("protocol", protocol);
+    }
 }
 
 

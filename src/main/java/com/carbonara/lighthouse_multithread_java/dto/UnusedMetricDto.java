@@ -14,4 +14,9 @@ public class UnusedMetricDto {
     private String displayValue;
     private double numericValue;
 
+    public Document toDocument() {
+        return new Document()
+                .append("display_value", displayValue)
+                .append("numeric_value", numericValue);
+    }
 }
