@@ -24,6 +24,7 @@ public class Main {
     private static final String CONNECTION_STRING = "mongodb://localhost:27017";
     private static final String INPUT_FILE = "korea_public_website_url.json";
     private static final int THREAD_COUNT = 3;
+    private static final int THREAD_COUNT = getNumberOfCores();
     private static final AtomicInteger completedCount = new AtomicInteger(0);
     private static int totalTasks;
 
@@ -43,5 +44,9 @@ public class Main {
         }
 
         executorService.shutdown();
+    }
+
+    private static int getNumberOfCores() {
+        return Runtime.getRuntime().availableProcessors();
     }
 }
