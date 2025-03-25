@@ -23,8 +23,9 @@ public class LighthouseWorker implements Runnable {
     @Override
     public void run() {
         while (!queue.isEmpty()) {
+
             try {
-                Institution institution = queue.poll();
+                Institution institution = queue.take();
                 if (institution == null) {
                     continue;
                 }
