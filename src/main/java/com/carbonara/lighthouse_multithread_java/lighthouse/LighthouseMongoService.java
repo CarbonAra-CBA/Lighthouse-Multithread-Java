@@ -12,17 +12,26 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LighthouseMongoService {
+    private static LighthouseMongoService instance;
     private final MongoCollection<Document> resourceCollection;
     private final MongoCollection<Document> trafficCollection;
     private final MongoCollection<Document> unusedCollection;
     private final MongoCollection<Document> errorCollection;
 
-    public LighthouseMongoService(MongoClient mongoClient, String databaseName) {
+    private LighthouseMongoService(MongoClient mongoClient, String databaseName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         this.resourceCollection = database.getCollection("resource_data");
         this.trafficCollection = database.getCollection("traffic_data");
         this.unusedCollection = database.getCollection("unused_data");
         this.errorCollection = database.getCollection("error_logs");
+    }
+
+    public static synchronized LighthouseMongoService getInstance(MongoClient mongoClient, String databaseName) {
+        if (instance == null) {
+            instance = new LighthouseMongoService(mongoClient, databaseName);
+            System.out.println("✅ LighthouseMongoService 인스턴스 생성 완료");
+        }
+        return instance;
     }
 
     public void saveLighthouseData(LighthouseResultDto result, Institution institution) {
@@ -37,17 +46,14 @@ public class LighthouseMongoService {
                 return;
             }
 
-            // 📁 네트워크 요청 데이터를 Document 리스트로 변환
             List<Document> networkRequestDocs = result.getNetworkRequests().stream()
                     .map(nr -> nr.toDocument())
                     .collect(Collectors.toList());
 
-            // 📁 리소스 요약 데이터를 Document 리스트로 변환
             List<Document> resourceSummaryDocs = result.getResourceSummary().stream()
                     .map(rs -> rs.toDocument())
                     .collect(Collectors.toList());
 
-            // 📁 네트워크 리소스 데이터 저장
             Document resourceDoc = new Document()
                     .append("url", result.getUrl())
                     .append("network_request", networkRequestDocs)
@@ -55,7 +61,6 @@ public class LighthouseMongoService {
                     .append("timestamp", new Date());
             resourceCollection.insertOne(resourceDoc);
 
-            // 📁 트래픽 데이터 저장
             Document trafficDoc = new Document()
                     .append("url", result.getUrl())
                     .append("resource_summary", resourceSummaryDocs)
@@ -63,10 +68,9 @@ public class LighthouseMongoService {
                     .append("timestamp", new Date());
             trafficCollection.insertOne(trafficDoc);
 
-            // 📁 미사용 데이터 저장
             Document unusedDoc = new Document()
                     .append("url", result.getUrl())
-                    .append("unused_data", result.getUnusedData().toDocument()) // UnusedDataDto를 Document로 변환
+                    .append("unused_data", result.getUnusedData().toDocument())
                     .append("institution", institution.toDocument())
                     .append("timestamp", new Date());
             unusedCollection.insertOne(unusedDoc);
