@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.DoubleAdder;
 
 import static com.carbonara.lighthouse_multithread_java.lighthouse.LighthouseParser.parseLighthouseResult;
 import static com.carbonara.lighthouse_multithread_java.lighthouse.LighthouseRunner.runLighthouse;
@@ -20,9 +22,17 @@ public class LighthouseWorker implements Runnable {
     private final AtomicInteger completedCount;             // 완료된 작업 수
     private final int totalTasks;                           // 총 작업 수
 
+    // 최소/최대/총 실행 시간 기록을 위한 변수
+    private final AtomicLong minTime;
+    private final AtomicLong maxTime;
+    private final DoubleAdder totalElapsedTime;
+
     @Override
     public void run() {
         while (!queue.isEmpty()) {
+
+            long startTime = System.nanoTime();
+
             try {
 
                 // 대기열에서 기관 가져오기
@@ -58,8 +68,16 @@ public class LighthouseWorker implements Runnable {
             } catch (Exception e) {
                 log.error("🚨 오류 발생: {}", e.getMessage(), e);
             } finally {
+                long endTime = System.nanoTime();
+                long elapsedTime = endTime - startTime; // 나노초 그대로 유지
+
+                minTime.updateAndGet(prev -> Math.min(prev, elapsedTime));
+                maxTime.updateAndGet(prev -> Math.max(prev, elapsedTime));
+                totalElapsedTime.add(elapsedTime);
+
                 int done = completedCount.incrementAndGet();
-                log.info("📊 진행도: {}/{}", done, totalTasks);
+                log.info("📊 진행도: {}/{} | ⏳ 처리 시간: {} ms",
+                        done, totalTasks, String.format("%.3f", elapsedTime / 1_000_000.0));
             }
         }
     }
