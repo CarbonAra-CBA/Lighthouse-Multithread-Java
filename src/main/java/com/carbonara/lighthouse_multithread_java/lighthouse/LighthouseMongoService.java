@@ -5,12 +5,14 @@ import com.carbonara.lighthouse_multithread_java.dto.LighthouseResultDto;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class LighthouseMongoService {
     private static LighthouseMongoService instance;
     private final MongoCollection<Document> resourceCollection;
@@ -29,7 +31,7 @@ public class LighthouseMongoService {
     public static synchronized LighthouseMongoService getInstance(MongoClient mongoClient, String databaseName) {
         if (instance == null) {
             instance = new LighthouseMongoService(mongoClient, databaseName);
-            System.out.println("✅ LighthouseMongoService 인스턴스 생성 완료");
+            log.info("✅ LighthouseMongoService 인스턴스 생성 완료");
         }
         return instance;
     }
@@ -37,7 +39,7 @@ public class LighthouseMongoService {
     public void saveLighthouseData(LighthouseResultDto result, Institution institution) {
         try {
             if (result.getNetworkRequests().isEmpty()) {
-                System.err.println("⚠️ 네트워크 요청 데이터 없음: " + result.getUrl());
+                log.error("⚠️ 네트워크 요청 데이터 없음: " + result.getUrl());
                 errorCollection.insertOne(new Document()
                         .append("url", result.getUrl())
                         .append("error", "Network requests empty")
@@ -75,10 +77,10 @@ public class LighthouseMongoService {
                     .append("timestamp", new Date());
             unusedCollection.insertOne(unusedDoc);
 
-            System.out.println("✅ 데이터 저장 완료: " + result.getUrl());
+            log.info("✅ 데이터 저장 완료: " + result.getUrl());
 
         } catch (Exception e) {
-            System.err.println("❌ MongoDB 저장 중 오류 발생: " + result.getUrl());
+            log.error("❌ MongoDB 저장 중 오류 발생: " + result.getUrl());
             e.printStackTrace();
             errorCollection.insertOne(new Document()
                     .append("url", result.getUrl())
