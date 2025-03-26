@@ -4,7 +4,9 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class MongoDBConnector {
     private static MongoClient mongoClient;
 
@@ -19,7 +21,7 @@ public class MongoDBConnector {
                             .applyConnectionString(new ConnectionString(connectionString))
                             .build()
             );
-            System.out.println("✅ MongoDB 연결 생성 완료");
+            log.info("✅ MongoDB 연결 생성 완료");
         }
         return mongoClient;
     }

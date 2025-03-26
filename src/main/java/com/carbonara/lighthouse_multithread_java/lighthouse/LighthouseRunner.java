@@ -14,7 +14,7 @@ public class LighthouseRunner {
 
     public static String runLighthouse(String url) {
         long startTime = System.currentTimeMillis(); // 시작 시간 기록
-        System.out.println("Lighthouse 실행 시작: " + url);
+        log.info("Lighthouse 실행 시작: " + url);
 
         try {
             List<String> command = new ArrayList<>();
@@ -53,7 +53,6 @@ public class LighthouseRunner {
                     }
                 }
             }
-
             process.waitFor();
 
             long endTime = System.currentTimeMillis(); // 종료 시간 기록
