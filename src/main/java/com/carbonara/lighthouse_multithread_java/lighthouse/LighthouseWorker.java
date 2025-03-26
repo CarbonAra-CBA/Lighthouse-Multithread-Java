@@ -22,11 +22,6 @@ public class LighthouseWorker implements Runnable {
     private final AtomicInteger completedCount;             // 완료된 작업 수
     private final int totalTasks;                           // 총 작업 수
 
-    // 최소/최대/총 실행 시간 기록을 위한 변수
-    private final AtomicLong minTime;
-    private final AtomicLong maxTime;
-    private final DoubleAdder totalElapsedTime;
-
     @Override
     public void run() {
         while (!queue.isEmpty()) {
@@ -45,7 +40,7 @@ public class LighthouseWorker implements Runnable {
                 String url = institution.getSiteLink();
 
                 // 처리 중인 기관 로그 출력하기
-                log.info("🏢 Processing: {}", institution.getSiteName());
+                log.info("🏢 처리 중: {}", institution.getSiteName());
                 
                 // Lighthouse 실행 결과 가져오기
                 String originResult = runLighthouse(url);
@@ -63,21 +58,13 @@ public class LighthouseWorker implements Runnable {
 
                 // 파싱된 결과를 MongoDB에 저장하기
                 mongoService.saveLighthouseData(parsedResult, institution);
-                log.info("✅ 저장 완료: {}", institution.getSiteName());
+                log.info("⭐ 저장 완료: {}", institution.getSiteName());
 
             } catch (Exception e) {
                 log.error("🚨 오류 발생: {}", e.getMessage(), e);
             } finally {
-                long endTime = System.nanoTime();
-                long elapsedTime = endTime - startTime; // 나노초 그대로 유지
-
-                minTime.updateAndGet(prev -> Math.min(prev, elapsedTime));
-                maxTime.updateAndGet(prev -> Math.max(prev, elapsedTime));
-                totalElapsedTime.add(elapsedTime);
-
                 int done = completedCount.incrementAndGet();
-                log.info("📊 진행도: {}/{} | ⏳ 처리 시간: {} ms",
-                        done, totalTasks, String.format("%.3f", elapsedTime / 1_000_000.0));
+                log.info("📊 진행도: {}/{}", done, totalTasks);
             }
         }
     }
