@@ -14,12 +14,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class LighthouseMongoService {
-    private static LighthouseMongoService instance;
-    private final MongoCollection<Document> resourceCollection;
-    private final MongoCollection<Document> trafficCollection;
-    private final MongoCollection<Document> unusedCollection;
-    private final MongoCollection<Document> errorCollection;
+    private static LighthouseMongoService instance;                 // 싱글톤 인스턴스
+    private final MongoCollection<Document> resourceCollection;     // 리소스 데이터 컬렉션
+    private final MongoCollection<Document> trafficCollection;      // 트래픽 데이터 컬렉션
+    private final MongoCollection<Document> unusedCollection;       // 미사용 데이터 컬렉션
+    private final MongoCollection<Document> errorCollection;        // 오류 로그 컬렉션
 
+    // 생성자: MongoDB 컬렉션 초기화
     private LighthouseMongoService(MongoClient mongoClient, String databaseName) {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         this.resourceCollection = database.getCollection("resource_data");
@@ -28,6 +29,7 @@ public class LighthouseMongoService {
         this.errorCollection = database.getCollection("error_logs");
     }
 
+    // 싱글톤 인스턴스 반환 메서드
     public static synchronized LighthouseMongoService getInstance(MongoClient mongoClient, String databaseName) {
         if (instance == null) {
             instance = new LighthouseMongoService(mongoClient, databaseName);
@@ -36,8 +38,10 @@ public class LighthouseMongoService {
         return instance;
     }
 
+    // Lighthouse 결과 데이터를 MongoDB에 저장하는 메서드
     public void saveLighthouseData(LighthouseResultDto result, Institution institution) {
         try {
+            // 네트워크 요청 데이터가 비어 있는 경우 오류 로그 저장
             if (result.getNetworkRequests().isEmpty()) {
                 log.error("⚠️ 네트워크 요청 데이터 없음: " + result.getUrl());
                 errorCollection.insertOne(new Document()
@@ -48,14 +52,17 @@ public class LighthouseMongoService {
                 return;
             }
 
+            // 네트워크 요청 데이터를 Document로 변환
             List<Document> networkRequestDocs = result.getNetworkRequests().stream()
                     .map(nr -> nr.toDocument())
                     .collect(Collectors.toList());
 
+            // 리소스 요약 데이터를 Document로 변환
             List<Document> resourceSummaryDocs = result.getResourceSummary().stream()
                     .map(rs -> rs.toDocument())
                     .collect(Collectors.toList());
 
+            // 리소스 데이터 저장
             Document resourceDoc = new Document()
                     .append("url", result.getUrl())
                     .append("network_request", networkRequestDocs)
@@ -63,6 +70,7 @@ public class LighthouseMongoService {
                     .append("timestamp", new Date());
             resourceCollection.insertOne(resourceDoc);
 
+            // 트래픽 데이터 저장
             Document trafficDoc = new Document()
                     .append("url", result.getUrl())
                     .append("resource_summary", resourceSummaryDocs)
@@ -70,6 +78,7 @@ public class LighthouseMongoService {
                     .append("timestamp", new Date());
             trafficCollection.insertOne(trafficDoc);
 
+            // 미사용 데이터 저장
             Document unusedDoc = new Document()
                     .append("url", result.getUrl())
                     .append("unused_data", result.getUnusedData().toDocument())
@@ -82,6 +91,7 @@ public class LighthouseMongoService {
         } catch (Exception e) {
             log.error("❌ MongoDB 저장 중 오류 발생: " + result.getUrl());
             e.printStackTrace();
+            // 오류 로그 저장
             errorCollection.insertOne(new Document()
                     .append("url", result.getUrl())
                     .append("error", e.getMessage())
