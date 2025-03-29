@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Main {
 
     private static final String CONNECTION_STRING = "mongodb://localhost:27017";                // MongoDB 연결 문자열
-    private static final String INPUT_FILE = "korea_public_website_url_test.json";                   // 입력 파일 이름
+    private static final String INPUT_FILE = "korea_public_website_url_2.json";                   // 입력 파일 이름
     private static final String DB_NAME = "lighthouseDB";                                       // DB명
     private static final int THREAD_COUNT = getNumberOfCores();                                 // 사용할 스레드 수
     private static final AtomicInteger completedCount = new AtomicInteger(0);     // 완료된 작업 수
@@ -29,6 +29,10 @@ public class Main {
 
         // MongoDB 싱글톤 연결 생성
         MongoClient mongoClient = MongoDBConnector.getMongoClient(CONNECTION_STRING);
+        if (mongoClient == null) {
+            log.error("MongoDB 연결 실패");
+            return;
+        }
         LighthouseMongoService mongoService = LighthouseMongoService.getInstance(mongoClient, DB_NAME);
 
         // 유효한 URL이며 공공기관에 해당하는 기관 목록 추출
