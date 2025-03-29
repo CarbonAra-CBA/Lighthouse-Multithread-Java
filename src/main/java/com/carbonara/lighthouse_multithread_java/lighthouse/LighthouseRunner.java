@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public class LighthouseRunner {
@@ -14,7 +13,6 @@ public class LighthouseRunner {
 
     public static String runLighthouse(String url) {
         long startTime = System.currentTimeMillis(); // 시작 시간 기록
-        log.info("Lighthouse 실행 시작: " + url);
 
         try {
             List<String> command = new ArrayList<>();
@@ -23,11 +21,11 @@ public class LighthouseRunner {
             command.add("--output=json");
             command.add("--quiet");
             command.add("--only-categories=performance");
-            command.add("--max-wait-for-load=10000");
-            command.add("--throttling.method=devtools");
+            command.add("--max-wait-for-load=50000");
             command.add("--disable-storage-reset");
             command.add("--chrome-flags=" + String.join(" ",
                     "--headless",
+                    "--remote-debugging-port=9222",
                     "--disable-gpu",
                     "--no-sandbox",
                     "--disable-dev-shm-usage",
@@ -45,6 +43,8 @@ public class LighthouseRunner {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    log.info("\uD83D\uDEA8 Lighthouse 출력: " + line); // 각 라인 출력
+
                     if (!jsonStarted && line.trim().startsWith("{")) {
                         jsonStarted = true;
                     }
@@ -58,6 +58,7 @@ public class LighthouseRunner {
             long endTime = System.currentTimeMillis(); // 종료 시간 기록
             long elapsedTime = endTime - startTime; // 소요 시간 계산
             log.info("\uD83D\uDCA1 Lighthouse 실행 완료. 소요 시간: " + elapsedTime + "ms");
+
 
             return output.toString();
 

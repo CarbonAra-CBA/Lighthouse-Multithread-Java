@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.DoubleAdder;
 
 import static com.carbonara.lighthouse_multithread_java.lighthouse.LighthouseParser.parseLighthouseResult;
 import static com.carbonara.lighthouse_multithread_java.lighthouse.LighthouseRunner.runLighthouse;
@@ -25,8 +23,6 @@ public class LighthouseWorker implements Runnable {
     @Override
     public void run() {
         while (!queue.isEmpty()) {
-
-            long startTime = System.nanoTime();
 
             try {
 
