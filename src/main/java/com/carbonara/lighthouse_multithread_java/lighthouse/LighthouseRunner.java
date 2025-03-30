@@ -3,7 +3,6 @@ package com.carbonara.lighthouse_multithread_java.lighthouse;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,28 +18,16 @@ public class LighthouseRunner {
             List<String> command = new ArrayList<>();
             command.add(LIGHTHOUSE_PATH);
             command.add(url);
-            command.add("--output=json");
-            command.add("--quiet");
-            command.add("--only-categories=performance");
-            command.add("--max-wait-for-load=20000"); // 대기 시간을 줄임
-            command.add("--disable-storage-reset");
+            command.add("--output=json"); // JSON 형식으로 결과 출력
+            command.add("--quiet"); // 실행 중 로그 출력 최소화
+            command.add("--only-categories=performance"); // 성능 카테고리만 분석
+            command.add("--max-wait-for-load=7000"); // 최대 대기 시간 설정 (밀리초)
             command.add("--chrome-flags=" + String.join(" ",
-                    "--headless",
-                    "--disable-gpu",
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disk-cache-dir=/tmp/lh-cache",
-                    "--memory-pressure-off",
-//                    "--disable-software-rasterizer",  // 소프트웨어 래스터라이저 비활성화
-//                    "--disable-extensions",  // 확장 프로그램 비활성화
-//                    "--disable-plugins",  // 플러그인 비활성화
-//                    "--disable-cache",  // 캐시 비활성화
-                    "--disable-network-throttling",  // 네트워크 제한 비활성화
-                    "--throttling-method=devtools",  // 빠른 성능 테스트를 위한 개발자 도구 방법 사용
-                    "--disable-background-networking", // 백그라운드 네트워크 비활성화
-                    "--disable-sync",                  // 동기화 비활성화
-                    "--disable-component-extensions-with-background-pages", // 백그라운드 페이지 비활성화
-                    "--mute-audio"                     // 오디오 비활성화
+                    "--headless", // 헤드리스 모드로 실행 (UI 없이)
+                    "--disable-gpu", // GPU 비활성화
+                    "--no-sandbox", // 샌드박스 모드 비활성화
+                    "--disable-dev-shm-usage", // /dev/shm 사용 비활성화
+                    "--disk-cache-dir=/tmp/lh-cache" // 디스크 캐시 디렉토리 설정
             ));
 
 
