@@ -4,6 +4,7 @@ import com.carbonara.lighthouse_multithread_java.dto.Institution;
 import com.carbonara.lighthouse_multithread_java.lighthouse.LighthouseMongoService;
 import com.carbonara.lighthouse_multithread_java.lighthouse.LighthouseWorker;
 import com.carbonara.lighthouse_multithread_java.util.MongoDBConnector;
+import com.carbonara.lighthouse_multithread_java.util.ProgressManager;
 import com.carbonara.lighthouse_multithread_java.util.UrlManager;
 import com.mongodb.client.MongoClient;
 import lombok.extern.slf4j.Slf4j;
@@ -35,12 +36,14 @@ public class Main {
         }
         LighthouseMongoService mongoService = LighthouseMongoService.getInstance(mongoClient, DB_NAME);
 
-        // 유효한 URL이며 공공기관에 해당하는 기관 목록 추출
-        List<Institution> validInstitutions = UrlManager.filterValidInstitutions(INPUT_FILE);
-        totalTasks = validInstitutions.size();
+        // 마지막으로 처리된 인덱스 가져오기
+        int lastProcessedIndex = ProgressManager.loadProgress();
+        log.info("마지막으로 처리된 인덱스: {}", lastProcessedIndex);
 
-        // 작업 대기열 생성
-        LinkedBlockingQueue<Institution> queue = new LinkedBlockingQueue<>(validInstitutions);
+        // 전체 작업 목록 로드 후 진행된 인덱스 이후의 데이터만 선택
+        List<Institution> allTasks = UrlManager.filterValidInstitutions(INPUT_FILE);
+        List<Institution> pendingTasks = allTasks.subList(Math.min(lastProcessedIndex, allTasks.size()), allTasks.size());
+        totalTasks = pendingTasks.size();
 
         // 스레드 풀 생성 -> 스레드 관리
         ExecutorService executorService = new ThreadPoolExecutor(
@@ -49,6 +52,7 @@ public class Main {
                 60L, TimeUnit.SECONDS,      // 유휴 스레드가 종료되기까지의 시간
                 new LinkedBlockingQueue<>() // 무제한 큐 (데드락 방지)
         );
+        LinkedBlockingQueue<Institution> queue = new LinkedBlockingQueue<>(pendingTasks);
 
         // 각 스레드에 작업 할당
         for (int i = 0; i < THREAD_COUNT; i++) {
@@ -79,6 +83,9 @@ public class Main {
 
         log.info("\uD83D\uDD56 총 실행 시간: {}ms", totalElapsedTime);
         log.info("\uD83D\uDD56 평균 작업 실행 시간: {}ms", averageExecutionTime);
+
+        // 모든 작업이 완료되면 진행 상태 파일 초기화
+        ProgressManager.resetProgress();
     }
 
     // 사용 가능한 코어 수 반환

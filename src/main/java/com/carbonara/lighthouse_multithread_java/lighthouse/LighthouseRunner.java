@@ -58,7 +58,7 @@ public class LighthouseRunner {
 
             long endTime = System.currentTimeMillis(); // 종료 시간 기록
             long elapsedTime = endTime - startTime; // 소요 시간 계산
-            log.info("\uD83D\uDCA1 Lighthouse 실행 완료. 소요 시간: " + elapsedTime + "ms");
+            log.info("\uD83D\uDCA1 Lighthouse 실행 완료. 소요 시간: " + elapsedTime + "ms" + " (" + url + ")");
 
 
             return output.toString();

@@ -2,6 +2,7 @@ package com.carbonara.lighthouse_multithread_java.lighthouse;
 
 import com.carbonara.lighthouse_multithread_java.dto.Institution;
 import com.carbonara.lighthouse_multithread_java.dto.LighthouseResultDto;
+import com.carbonara.lighthouse_multithread_java.util.ProgressManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,6 +62,10 @@ public class LighthouseWorker implements Runnable {
             } finally {
                 int done = completedCount.incrementAndGet();
                 log.info("📊 진행도: {}/{}", done, totalTasks);
+
+
+                // 진행 상태 업데이트 (인덱스 저장)
+                ProgressManager.saveProgress(done);
             }
         }
     }
