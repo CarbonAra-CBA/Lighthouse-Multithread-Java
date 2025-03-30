@@ -16,10 +16,10 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class Main {
 
-    private static final String CONNECTION_STRING = "mongodb://localhost:27017";                // MongoDB 연결 문자열
+    private static final String CONNECTION_STRING = System.getenv("CONNECTION_STRING");                // MongoDB 연결 문자열
+    private static final String DB_NAME = System.getenv("DB_NAME");                                       // DB명
     private static final String INPUT_FILE = "korea_public_website_url_2.json";                   // 입력 파일 이름
-    private static final String DB_NAME = "lighthouseDB";                                       // DB명
-    private static final int THREAD_COUNT = getNumberOfCores();                                 // 사용할 스레드 수
+    private static final int THREAD_COUNT = getOptimalThreadCount();                                 // 사용할 스레드 수
     private static final AtomicInteger completedCount = new AtomicInteger(0);     // 완료된 작업 수
     private static final AtomicLong totalExecutionTime = new AtomicLong(0);       // 총 실행 시간
     private static int totalTasks;
@@ -84,5 +84,12 @@ public class Main {
     // 사용 가능한 코어 수 반환
     private static int getNumberOfCores() {
         return Runtime.getRuntime().availableProcessors();
+    }
+
+    // 효율적인 스레드 개수를 반환하는 메서드
+    private static int getOptimalThreadCount() {
+        int availableCores = Runtime.getRuntime().availableProcessors();
+        // 코어 수의 절반으로 설정하되, 최소 1개의 스레드는 항상 유지
+        return Math.max(1, availableCores / 2);
     }
 }
