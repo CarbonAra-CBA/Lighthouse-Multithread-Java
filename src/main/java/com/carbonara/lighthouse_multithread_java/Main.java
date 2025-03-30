@@ -52,11 +52,15 @@ public class Main {
 
         // 각 스레드에 작업 할당
         for (int i = 0; i < THREAD_COUNT; i++) {
-            executorService.execute(() -> {
-                long threadStartTime = System.currentTimeMillis();
-                new LighthouseWorker(queue, mongoService, completedCount, totalTasks).run();
-                long elapsedTime = System.currentTimeMillis() - threadStartTime;
-                totalExecutionTime.addAndGet(elapsedTime);
+            executorService.submit(() -> {
+                try {
+                    long threadStartTime = System.currentTimeMillis();
+                    new LighthouseWorker(queue, mongoService, completedCount, totalTasks).run();
+                    long elapsedTime = System.currentTimeMillis() - threadStartTime;
+                    totalExecutionTime.addAndGet(elapsedTime);
+                } catch (Exception e) {
+                    log.error("작업 수행 중 오류 발생", e);
+                }
             });
         }
 
