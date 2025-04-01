@@ -1,6 +1,9 @@
 package com.carbonara.lighthouse_multithread_java.lighthouse;
 
 import com.carbonara.lighthouse_multithread_java.dto.*;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -75,14 +78,18 @@ public class LighthouseParser {
             log.info("🎯 Lighthouse 파싱 완료 - URL: {}", url);
             return new LighthouseResultDto(url, networkRequests, resourceSummary, unusedData);
 
+        } catch (JsonParseException e) {
+            log.warn("❌ JSON 형식 오류 - URL: {} | 오류 위치: {}", url, e.getLocation());
+        } catch (JsonMappingException e) {
+            log.warn("❌ JSON 매핑 오류 - URL: {}", url);
+        } catch (JsonProcessingException e) {
+            log.warn("❌ JSON 처리 중 오류 - URL: {}", url);
         } catch (Exception e) {
-            log.error("❌ Lighthouse 결과 JSON 파싱 중 오류 발생 - URL: {} | 원인: {}", url, e.getMessage(), e);
-
-            // JSON 데이터 일부 출력하여 디버깅 도움
-            log.debug("🔍 오류 발생 시 JSON 일부: {}", json.length() > 500 ? json.substring(0, 500) + "..." : json);
-
-            return null;
+            log.error("🚨 Lighthouse 결과 JSON 파싱 실패 - URL: {} | 원인: {}", url, e.getMessage());
         }
+
+        log.debug("🔍 오류 발생 시 JSON 일부: {}", json.length() > 500 ? json.substring(0, 500) + "..." : json);
+        return null;
     }
 
     // 미사용 데이터 추출 메서드
