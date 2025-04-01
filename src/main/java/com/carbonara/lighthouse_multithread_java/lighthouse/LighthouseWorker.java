@@ -24,47 +24,51 @@ public class LighthouseWorker implements Runnable {
     @Override
     public void run() {
         while (!queue.isEmpty()) {
-
+            Institution institution = null;
             try {
+                log.info("📌 작업 대기열에서 기관 가져오는 중...");
+                institution = queue.take(); // 다음 기관 가져오기
 
-                // 대기열에서 기관 가져오기
-                Institution institution = queue.take();
                 if (institution == null) {
+                    log.warn("⚠️ 기관 정보가 null입니다. 다음 작업으로 넘어갑니다.");
                     continue;
                 }
-                
-                // 기관 사이트 링크 가져오기
-                String url = institution.getSiteLink();
 
-                // 처리 중인 기관 로그 출력하기
-                log.info("🏢 처리 중: {}", institution.getSiteName());
-                
-                // Lighthouse 실행 결과 가져오기
+                String url = institution.getSiteLink();
+                log.info("🌍 Lighthouse 실행 시작 - 기관명: {} | URL: {}", institution.getSiteName(), url);
+
+                // Lighthouse 실행
                 String originResult = runLighthouse(url);
                 if (originResult == null || originResult.trim().isEmpty()) {
-                    log.warn("❌ Lighthouse 실행 결과가 유효하지 않습니다: {}", url);
+                    log.warn("❌ Lighthouse 실행 결과가 없음 - URL: {}", url);
                     continue;
                 }
+                log.info("📥 Lighthouse 실행 완료 - 결과 길이: {} bytes | URL: {}", originResult.length(), url);
 
-                // 실행 결과에서 필요한 정보 파싱하기 -> Dto로 저장
+                // 결과 파싱
+                log.info("🛠️ Lighthouse 결과 파싱 시작 - URL: {}", url);
                 LighthouseResultDto parsedResult = parseLighthouseResult(originResult, url);
+
                 if (parsedResult == null) {
-                    log.warn("❌ Lighthouse 결과 파싱 실패: {}", url);
+                    log.warn("❌ Lighthouse 결과 파싱 실패 - URL: {}", url);
                     continue;
                 }
+                log.info("✅ Lighthouse 결과 파싱 완료 - URL: {}", url);
 
-                // 파싱된 결과를 MongoDB에 저장하기
+                // MongoDB 저장
+                log.info("💾 MongoDB 저장 시작 - 기관명: {}", institution.getSiteName());
                 mongoService.saveLighthouseData(parsedResult, institution);
-                log.info("⭐ 저장 완료: {}", institution.getSiteName());
+                log.info("⭐ 저장 완료 - 기관명: {}", institution.getSiteName());
 
             } catch (Exception e) {
-                log.error("🚨 오류 발생: {}", e.getMessage(), e);
+                log.error("🚨 오류 발생 - 기관명: {} | 원인: {}",
+                        institution != null ? institution.getSiteName() : "알 수 없음",
+                        e.getMessage(), e);
             } finally {
                 int done = completedCount.incrementAndGet();
-                log.info("📊 진행도: {}/{}", done, totalTasks);
+                log.info("📊 진행도 업데이트: {}/{}", done, totalTasks);
 
-
-                // 진행 상태 업데이트 (인덱스 저장)
+                // 진행 상태 업데이트
                 ProgressManager.saveProgress(done);
             }
         }

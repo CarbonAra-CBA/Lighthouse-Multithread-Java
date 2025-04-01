@@ -11,11 +11,17 @@ import java.util.List;
 @Slf4j
 public class LighthouseParser {
     public static LighthouseResultDto parseLighthouseResult(String json, String url) {
-
         try {
+            log.info("📥 Lighthouse JSON 파싱 시작 - URL: {}", url);
+
             ObjectMapper objectMapper = new ObjectMapper();
+
+            log.debug("📌 입력 JSON 내용: {}", json != null && json.length() > 500 ? json.substring(0, 500) + "..." : json);
+
             JsonNode root = objectMapper.readTree(json);
             JsonNode audits = root.path("audits");
+
+            log.debug("✅ JSON 파싱 성공 - audits 필드 추출 완료");
 
             // 네트워크 요청 데이터 추출
             List<NetworkRequestDto> networkRequests = new ArrayList<>();
@@ -34,6 +40,9 @@ public class LighthouseParser {
                             node.path("protocol").asText()
                     ));
                 }
+                log.debug("✅ 네트워크 요청 데이터 {}개 추출 완료", networkRequests.size());
+            } else {
+                log.warn("⚠️ 네트워크 요청 데이터가 배열 형식이 아님");
             }
 
             // 리소스 요약 데이터 추출
@@ -50,6 +59,9 @@ public class LighthouseParser {
                             node.path("transferSize").asLong()
                     ));
                 }
+                log.debug("✅ 리소스 요약 데이터 {}개 추출 완료", resourceSummary.size());
+            } else {
+                log.warn("⚠️ 리소스 요약 데이터가 배열 형식이 아님");
             }
 
             // 미사용 데이터 추출
@@ -60,12 +72,15 @@ public class LighthouseParser {
                     extractUnusedData(audits.path("modern-image-formats"))
             );
 
-            // 최종 결과 DTO 반환
+            log.info("🎯 Lighthouse 파싱 완료 - URL: {}", url);
             return new LighthouseResultDto(url, networkRequests, resourceSummary, unusedData);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("❌ Lighthouse 결과 JSON 파싱 중 오류 발생.");
+            log.error("❌ Lighthouse 결과 JSON 파싱 중 오류 발생 - URL: {} | 원인: {}", url, e.getMessage(), e);
+
+            // JSON 데이터 일부 출력하여 디버깅 도움
+            log.debug("🔍 오류 발생 시 JSON 일부: {}", json.length() > 500 ? json.substring(0, 500) + "..." : json);
+
             return null;
         }
     }
@@ -73,11 +88,12 @@ public class LighthouseParser {
     // 미사용 데이터 추출 메서드
     private static UnusedMetricDto extractUnusedData(JsonNode auditNode) {
         if (auditNode == null || auditNode.isMissingNode()) {
-            return new UnusedMetricDto("", 0.0); // 기본값 반환
+            log.warn("⚠️ 미사용 데이터가 없음 (기본값 반환)");
+            return new UnusedMetricDto("", 0.0);
         }
         return new UnusedMetricDto(
-                auditNode.path("displayValue").asText(""), // displayValue 추출
-                auditNode.path("numericValue").asDouble(0.0) // numericValue 추출
+                auditNode.path("displayValue").asText(""),
+                auditNode.path("numericValue").asDouble(0.0)
         );
     }
 }
