@@ -6,6 +6,9 @@ import com.carbonara.lighthouse_multithread_java.util.ProgressManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,8 +42,12 @@ public class LighthouseWorker implements Runnable {
 
                 // Lighthouse 실행
                 String originResult = runLighthouse(url);
-                if (originResult == null || originResult.trim().isEmpty()) {
-                    log.warn("❌ Lighthouse 실행 결과가 없음 - URL: {}", url);
+                if (originResult == null) {
+                    log.warn("❌ Lighthouse 실행 결과가 null - URL: {}", url);
+                    continue;
+                }
+                else if (originResult.trim().isEmpty()) {
+                    log.warn("❌ Lighthouse 실행 결과가 빈 문자열 - URL: {}", url);
                     continue;
                 }
                 log.info("📥 Lighthouse 실행 완료 - 결과 길이: {} bytes | URL: {}", originResult.length(), url);
@@ -51,6 +58,11 @@ public class LighthouseWorker implements Runnable {
 
                 if (parsedResult == null) {
                     log.warn("❌ Lighthouse 결과 파싱 실패 - URL: {}", url);
+
+                    // 파싱 오류가 발생했을 때 도메인 유효성 검사
+                    if (!isDomainValid(url)) {
+                        log.warn("❌ 도메인 유효하지 않음 - URL: {}", url);
+                    }
                     continue;
                 }
                 log.info("✅ Lighthouse 결과 파싱 완료 - URL: {}", url);
@@ -71,6 +83,19 @@ public class LighthouseWorker implements Runnable {
                 // 진행 상태 업데이트
                 ProgressManager.saveProgress(done);
             }
+        }
+    }
+
+    // 도메인 유효성 검사
+    private boolean isDomainValid(String url) {
+        try {
+            InetAddress.getByName(new URL(url).getHost()); // 도메인 확인
+            return true;
+        } catch (UnknownHostException e) {
+            return false; // 도메인이 존재하지 않음
+        } catch (Exception e) {
+            log.error("❌ 도메인 검사 중 오류 발생 - URL: {}", url, e);
+            return false;
         }
     }
 }
